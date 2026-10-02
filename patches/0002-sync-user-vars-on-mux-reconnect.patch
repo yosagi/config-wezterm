@@ -1,0 +1,53 @@
+From: Local Patch
+Subject: [PATCH] fix: sync user_vars on mux reconnect
+
+GetPaneRenderChangesResponse に user_vars フィールドを追加し、
+mux server から client への user_vars 同期を実装。
+
+これにより、セッション切断→再接続時に user_vars（WEZTERM_AI_HELPER など）
+が維持されるようになる。
+
+Fixes: wezterm/wezterm#5832
+---
+ codec/src/lib.rs                              | 2 ++
+ wezterm-client/src/pane/clientpane.rs         | 1 +
+ wezterm-mux-server-impl/src/sessionhandler.rs | 1 +
+ 3 files changed, 4 insertions(+)
+
+diff --git a/codec/src/lib.rs b/codec/src/lib.rs
+index XXXXXXX..XXXXXXX 100644
+--- a/codec/src/lib.rs
++++ b/codec/src/lib.rs
+@@ -893,6 +893,8 @@ pub struct GetPaneRenderChangesResponse {
+
+     pub input_serial: Option<InputSerial>,
+     pub seqno: SequenceNo,
++    #[serde(default)]
++    pub user_vars: HashMap<String, String>,
+ }
+
+ #[derive(Deserialize, Serialize, PartialEq, Debug)]
+diff --git a/wezterm-client/src/pane/clientpane.rs b/wezterm-client/src/pane/clientpane.rs
+index XXXXXXX..XXXXXXX 100644
+--- a/wezterm-client/src/pane/clientpane.rs
++++ b/wezterm-client/src/pane/clientpane.rs
+@@ -139,6 +139,7 @@ impl ClientPane {
+         match pdu {
+             Pdu::GetPaneRenderChangesResponse(mut delta) => {
+                 *self.mouse_grabbed.lock() = delta.mouse_grabbed;
++                *self.user_vars.lock() = std::mem::take(&mut delta.user_vars);
+
+                 let bonus_lines = std::mem::take(&mut delta.bonus_lines);
+                 let client = { Arc::clone(&self.renderable.lock().inner.borrow().client) };
+diff --git a/wezterm-mux-server-impl/src/sessionhandler.rs b/wezterm-mux-server-impl/src/sessionhandler.rs
+index XXXXXXX..XXXXXXX 100644
+--- a/wezterm-mux-server-impl/src/sessionhandler.rs
++++ b/wezterm-mux-server-impl/src/sessionhandler.rs
+@@ -140,6 +140,7 @@ impl PerPane {
+             working_dir: working_dir.map(Into::into),
+             input_serial: force_with_input_serial,
+             seqno: self.seqno,
++            user_vars: pane.copy_user_vars(),
+         })
+     }
+ }

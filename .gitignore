@@ -1,0 +1,12 @@
+/upstream/
+/reports/
+/scratch/
+/.claude/
+/CLAUDE*.md
+/wezterm-connections.conf
+/wezterm*.desktop
+/tmp/
+/junktools/
+work_in_progress.md
+*.log
+/config-public/
