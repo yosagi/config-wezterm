@@ -75,10 +75,11 @@ local function group_color_from_id(group_id)
 
 	return {
 		indicator = hsl_to_hex(h, 0.8, 0.60),
-		bg_active = hsl_to_hex(h, 0.4, 0.28),
-		bg_inactive = hsl_to_hex(h, 0.25, 0.12),
+		-- アクティブは暗くして端末とつながって見せ、非アクティブは明るく・彩度控えめにする
+		bg_active = hsl_to_hex(h, 0.25, 0.12),
+		bg_inactive = hsl_to_hex(h, 0.15, 0.28),
 		fg_active = hsl_to_hex(h, 0.3, 0.90),
-		fg_inactive = hsl_to_hex(h, 0.15, 0.55),
+		fg_inactive = hsl_to_hex(h, 0.15, 0.65),
 	}
 end
 
@@ -419,13 +420,17 @@ function M.setup()
 			end
 		end
 
+		-- 幅はセル数で数える（全角は 2）。バイト単位で切ると UTF-8 が割れて描画に失敗する
+		-- グループタブは先頭の ▎ が 1 セル使う
 		local display = string.format(" %d: %s ", tab_index, title)
-		if #display > max_width then
-			display = display:sub(1, max_width - 1) .. "…"
+		local available = group_id and max_width - 1 or max_width
+		if wezterm.column_width(display) > available then
+			display = wezterm.truncate_right(display, available - 1) .. "…"
 		end
 
 		if group_id then
 			local colors = group_color_from_id(group_id)
+			-- アクティブタブは暗い背景にして端末とつながって見せ、非アクティブタブは明るくして切り離す
 			if tab.is_active then
 				return {
 					{ Background = { Color = colors.bg_active } },
@@ -446,14 +451,14 @@ function M.setup()
 		else
 			if tab.is_active then
 				return {
-					{ Background = { Color = "#484848" } },
+					{ Background = { Color = "#1a1a1a" } },
 					{ Foreground = { Color = "#e0e0e0" } },
 					{ Text = display },
 				}
 			else
 				return {
-					{ Background = { Color = "#1a1a1a" } },
-					{ Foreground = { Color = "#808080" } },
+					{ Background = { Color = "#484848" } },
+					{ Foreground = { Color = "#a0a0a0" } },
 					{ Text = display },
 				}
 			end

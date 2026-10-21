@@ -29,6 +29,10 @@ config.font = wezterm.font("HackGen Console NF")
 -- カラースキーム
 local scheme = wezterm.get_builtin_color_schemes()["Tomorrow (dark) (terminal.sexy)"]
 scheme.scrollbar_thumb = "#555555"
+local fg = wezterm.color.parse(scheme.foreground)
+local bg = wezterm.color.parse(scheme.background)
+scheme.compose_fg = fg:lighten(0.5)
+scheme.compose_bg = bg:lighten(0.2)
 config.color_schemes = {
 	["Custom Scheme"] = scheme,
 }
